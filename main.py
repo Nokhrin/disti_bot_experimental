@@ -1,9 +1,15 @@
+# global dependencies
 import sys
 sys.path.insert(0, 'common')
-import consts
-import messages_templates
-
 import logging
+import json
+import telebot
+from telebot import types
+
+# my dependencies
+import consts
+import calculators
+import messages_templates
 
 logging.basicConfig(filename=consts.log_path,
                     filemode=consts.log_filemode,
@@ -11,19 +17,18 @@ logging.basicConfig(filename=consts.log_path,
                     format=consts.log_format,
                     level=consts.log_level)
 
-import telebot
-from telebot import types
-
-import calculators
-
 logging.info('importing check has been passed')
 
+
+# getting API token
+with open("common/conf.json") as conf:
+    token = json.load(conf)
 
 #==============================
 # main function
 if __name__ == "__main__":
 
-    bot = telebot.TeleBot(consts.API_KEY, parse_mode=None)
+    bot = telebot.TeleBot(token['telegram_token'], parse_mode=None)
 
     #=======================#
     ### commands handlers ###
