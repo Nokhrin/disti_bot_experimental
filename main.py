@@ -64,9 +64,10 @@ if __name__ == "__main__":
         # buttons for calculators
         calculator_01 = types.KeyboardButton('Расчёт голов и тела')
         calculator_02 = types.KeyboardButton('Конвертация температуры')
+        calculator_03 = types.KeyboardButton('Простой калькулятор')
         # ==================
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-        markup.add(calculator_01, calculator_02)
+        markup.add(calculator_01, calculator_02, calculator_03)
         bot.send_message(message.chat.id, messages_templates.calculator_message, reply_markup=markup)
 
 
@@ -122,12 +123,104 @@ if __name__ == "__main__":
             calc_response = calculators.temperature_converter(degrees_1, units_1)
             bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_buttons)
 
+        elif message.text.lower() in ['простой калькулятор']:
+            str_message = f'Добро пожаловать в простой калькулятор!\nВведите первое число\n'
+            bot_message = bot.send_message(message.chat.id, str_message)
+            bot.register_next_step_handler(bot_message, get_number_1)
+            # simple math calculator
+            #
+            # 1. variables: first number, operator, second number, result
+            # 2. calculation
+            # 3. continue calculation?
+            #  if yes, return previous result as first number
+            #  if no, return result
+            user_number_1 = ''
+            user_number_2 = ''
+            user_operator = ''
+            calc_result = None
+
+
+
+            calc_response = calculators.simple_math_calculator(user_number_1, user_operator, user_number_2)
+            bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_buttons)
+
         else:
             bot.reply_to(message, messages_templates.dont_understand, reply_markup=markup_hide_buttons)
             # bot.reply_to(message, message.text, reply_markup=markup_hide_buttons) # simple echo to message
 
 
+    def get_number_1(message, result = None):
+        try:
+            global user_number_1
+            # for the first run
+            if user_number_1 == None:
+                user_number_1 = int(user_number_1)
+            # for next runs
+            else:
+                user_number_1 = result
 
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+            key_1 = types.KeyboardButton('+')
+            key_2 = types.KeyboardButton('-')
+            key_3 = types.KeyboardButton('*')
+            key_4 = types.KeyboardButton('/')
+
+            markup.add(key_1, key_2, key_3, key_4)
+
+            bot_message = bot.send_message(message.chat.id, "Выберите операцию", reply_markup=markup)
+            bot.register_next_step_handler(bot_message, get_operator
+
+        except Exception:
+            bot.reply_to("Что-то пошло не так")
+
+
+    def get_operator(message):
+        try:
+            global user_operator
+
+            user_operator = message.text
+
+            # hide the keyboard
+            markup = types.ReplyKeyboardRemove(selective=False)
+
+            bot_message = bot.send_message(message.chat.id, "Ввведите следующее число", reply_markup=markup)
+            bot.register_next_step_handler(bot_message, get_number_2)
+
+        except Exception:
+            bot.reply_to("Что-то пошло не так")
+
+
+    def get_number_2(message):
+        try:
+            global user_number_2
+            user_number_2 = int(message.text)
+
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+            key_1 = types.KeyboardButton('Завершить вычисление')
+            key_2 = types.KeyboardButton('Продолжить вычисление')
+            markup.add(key_1, key_2)
+
+            bot_message = bot.send_message(message.chat.id, "Завершаем или продолжаем?", reply_markup=markup)
+            bot.register_next_step_handler(bot_message, stop_or_continue)
+
+        except Exception:
+            bot.reply_to("Что-то пошло не так")
+
+
+    def stop_or_continue():
+        try:
+            user_result = calculators.simple_math_calculator(user_operator, user_number_1, user_number_2)
+
+            # hide the keyboard
+            markup = types.ReplyKeyboardRemove(selective=False)
+
+            if message.text.lower() in ['завершить вычисление']:
+                bot.send_message(message.chat.id, user_result, reply_markup=markup)
+            elif message.text.lower() in ['продолжить вычисление']:
+                get_number_1(message, user_result)
+
+        except Exception:
+            bot.reply_to("Что-то пошло не так")
 
 
     # testing bot with simple echoing message object

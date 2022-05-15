@@ -18,3 +18,9 @@ def temperature_converter(degree, unit):
         return result
     else:
         return 'могу перевести из градусов Цельсия в градусы Фаренгейта и наоборот'
+
+# simple math calculator
+def simple_math_calculator(str_function, int_number_1, int_number_2):
+    str_expression = f'{int_number_1} {str_function} {int_number_2}'
+    str_result = eval(str_expression)
+    return str_result
