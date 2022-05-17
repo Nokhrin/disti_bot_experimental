@@ -203,44 +203,57 @@ if __name__ == "__main__":
 
     def get_operator(message):
         logging.info('started get_operator')
-        try:
-            global user_operator
+        supported_operators = ['+', '-', '*', '/']
+        # try:
+        global user_number_1
+        global user_operator
 
-            user_operator = message.text
-            logging.debug(f'user_operator = {user_operator}')
+        user_operator = message.text
+        logging.debug(f'user_operator = {user_operator}')
 
+        # check the operator input
+        if user_operator not in supported_operators:
+            logging.debug('operator is incorrect, enter the operator')
+            markup = types.ReplyKeyboardRemove(selective=False)
+            bot_message = bot.send_message(message.chat.id, "Операция выбрана некорректно, выберите операцию", reply_markup=markup)
+            bot.register_next_step_handler(bot_message, get_number_1(message, user_number_1))
+        # if operator is correct
+        else:
             # hide the keyboard
             markup = types.ReplyKeyboardRemove(selective=False)
 
             bot_message = bot.send_message(message.chat.id, "Введите следующее число", reply_markup=markup)
             bot.register_next_step_handler(bot_message, get_number_2)
 
-        except Exception:
-            bot.reply_to(message, "Что-то пошло не так")
+        # except Exception:
+        #     bot.reply_to(message, "Что-то пошло не так")
 
 
     def get_number_2(message):
         logging.info('started get_number_2')
-        try:
-            global user_number_2
-            user_number_2 = int(message.text)
+        # try:
+        global user_number_2
+        user_number_2 = int(message.text)
 
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-            key_1 = types.KeyboardButton('Завершить вычисление')
-            key_2 = types.KeyboardButton('Продолжить вычисление')
-            markup.add(key_1, key_2)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+        key_1 = types.KeyboardButton('Завершить вычисление')
+        key_2 = types.KeyboardButton('Продолжить вычисление')
+        markup.add(key_1, key_2)
 
-            bot_message = bot.send_message(message.chat.id, "Завершаем или продолжаем?", reply_markup=markup)
-            bot.register_next_step_handler(bot_message, stop_or_continue)
+        calc_result = calculators.simple_math_calculator(user_operator, user_number_1, user_number_2)
+        bot.send_message(message.chat.id, f'результат = {calc_result}')
 
-        except Exception:
-            bot.reply_to(message, "Что-то пошло не так")
+        bot_message = bot.send_message(message.chat.id, "Завершаем или продолжаем?", reply_markup=markup)
+        bot.register_next_step_handler(bot_message, stop_or_continue)
+
+        # except Exception:
+        #     bot.reply_to(message, "Что-то пошло не так")
 
 
     def stop_or_continue(message):
         logging.debug('started stop_or_continue')
         logging.debug(f'function input => {message.text}')
-
+        #try:
         global user_operator
         global user_number_1
         global user_number_2
@@ -255,31 +268,11 @@ if __name__ == "__main__":
 
         if message.text.lower() in ['завершить вычисление']:
             logging.debug('chose to finish')
-            bot.send_message(message.chat.id, calc_result, reply_markup=markup)
+            bot.send_message(message.chat.id, f'результат = {calc_result}', reply_markup=markup)
         elif message.text.lower() in ['продолжить вычисление']:
             logging.debug('chose to continue')
             get_number_1(message, calc_result)
 
-        # try:
-        #     global user_operator
-        #     global user_number_1
-        #     global user_number_2
-        #     global calc_result
-        #
-        #     logging.debug(f'user_operator = {user_operator}, user_number_1 = {user_number_1}, user_number_2 = {user_number_2}')
-        #
-        #     calc_result = calculators.simple_math_calculator(user_operator, user_number_1, user_number_2)
-        #     logging.debug(f'called calculator function, calc_result = {calc_result}')
-        #     # hide the keyboard
-        #     markup = types.ReplyKeyboardRemove(selective=False)
-        #
-        #     if message.text.lower() in ['завершить вычисление']:
-        #         logging.debug('chose to finish')
-        #         bot.send_message(message.chat.id, calc_result, reply_markup=markup)
-        #     elif message.text.lower() in ['продолжить вычисление']:
-        #         logging.debug('chose to continue')
-        #         get_number_1(message, calc_result)
-        #
         # except Exception:
         #     bot.reply_to(message, "Что-то пошло не так")
 
