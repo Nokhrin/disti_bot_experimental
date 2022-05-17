@@ -155,8 +155,8 @@ if __name__ == "__main__":
         global user_number_1
         # for the first run
         if result == None:
-            result = int(message.text)
-            logging.debug(f'result = {result}')
+            user_number_1 = int(message.text)
+            #logging.debug(f'result = {result}')
         # for next runs
         else:
             user_number_1 = result
@@ -249,13 +249,13 @@ if __name__ == "__main__":
         logging.debug(f'user_operator = {user_operator}, user_number_1 = {user_number_1}, user_number_2 = {user_number_2}')
 
         calc_result = calculators.simple_math_calculator(user_operator, user_number_1, user_number_2)
-        logging.debug(f'called calculator function, user_result = {calc_result}')
+        logging.debug(f'called calculator function, calc_result = {calc_result}')
         # hide the keyboard
         markup = types.ReplyKeyboardRemove(selective=False)
 
         if message.text.lower() in ['завершить вычисление']:
             logging.debug('chose to finish')
-            bot.send_message(message.chat.id, user_result, reply_markup=markup)
+            bot.send_message(message.chat.id, calc_result, reply_markup=markup)
         elif message.text.lower() in ['продолжить вычисление']:
             logging.debug('chose to continue')
             get_number_1(message, calc_result)
@@ -269,13 +269,13 @@ if __name__ == "__main__":
         #     logging.debug(f'user_operator = {user_operator}, user_number_1 = {user_number_1}, user_number_2 = {user_number_2}')
         #
         #     calc_result = calculators.simple_math_calculator(user_operator, user_number_1, user_number_2)
-        #     logging.debug(f'called calculator function, user_result = {calc_result}')
+        #     logging.debug(f'called calculator function, calc_result = {calc_result}')
         #     # hide the keyboard
         #     markup = types.ReplyKeyboardRemove(selective=False)
         #
         #     if message.text.lower() in ['завершить вычисление']:
         #         logging.debug('chose to finish')
-        #         bot.send_message(message.chat.id, user_result, reply_markup=markup)
+        #         bot.send_message(message.chat.id, calc_result, reply_markup=markup)
         #     elif message.text.lower() in ['продолжить вычисление']:
         #         logging.debug('chose to continue')
         #         get_number_1(message, calc_result)
