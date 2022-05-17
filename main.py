@@ -151,12 +151,23 @@ if __name__ == "__main__":
 
     def get_number_1(message, result = None):
         logging.info('started get_number_1')
+        #try:
+
+        # check if user input is a number
+        try:
+            int(message.text)
+            logging.debug(f'input {message.text} is a number, continue')
+        except:
+            logging.debug(f'input {message.text} is not a number, ask again')
+            bot_message = bot.send_message(message.chat.id, f'{message.text} - не число, введите число')
+            bot.register_next_step_handler(bot_message, get_number_1)
+            return None
 
         global user_number_1
         # for the first run
         if result == None:
             user_number_1 = int(message.text)
-            #logging.debug(f'result = {result}')
+
         # for next runs
         else:
             user_number_1 = result
@@ -174,29 +185,6 @@ if __name__ == "__main__":
         bot_message = bot.send_message(message.chat.id, "Выберите операцию", reply_markup=markup)
         bot.register_next_step_handler(bot_message, get_operator)
 
-        # try:
-        #     global user_number_1
-        #     # for the first run
-        #     if result == None:
-        #         result = int(message.text)
-        #         logging.debug(f'result = {result}')
-        #     # for next runs
-        #     else:
-        #         user_number_1 = result
-        #
-        #     logging.debug(f'user_number_1 = {user_number_1}')
-        #
-        #     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        #     key_1 = types.KeyboardButton('+')
-        #     key_2 = types.KeyboardButton('-')
-        #     key_3 = types.KeyboardButton('*')
-        #     key_4 = types.KeyboardButton('/')
-        #
-        #     markup.add(key_1, key_2, key_3, key_4)
-        #
-        #     bot_message = bot.send_message(message.chat.id, "Выберите операцию", reply_markup=markup)
-        #     bot.register_next_step_handler(bot_message, get_operator)
-        #
         # except Exception:
         #     bot.reply_to(message, "Что-то пошло не так")
 
@@ -231,6 +219,18 @@ if __name__ == "__main__":
 
     def get_number_2(message):
         logging.info('started get_number_2')
+
+        # check if user input is a number
+        try:
+            int(message.text)
+            logging.debug(f'input {message.text} is a number, continue')
+        except:
+            logging.debug(f'input {message.text} is not a number, ask again')
+            bot_message = bot.send_message(message.chat.id, f'{message.text} - не число, введите число')
+            bot.register_next_step_handler(bot_message, get_number_2)
+            #return None
+            raise
+
         # try:
         global user_number_2
         user_number_2 = int(message.text)
