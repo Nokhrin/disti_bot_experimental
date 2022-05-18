@@ -34,7 +34,7 @@ if __name__ == "__main__":
     ### commands handlers ###
     #=======================#
     # markup for hiding buttons
-    markup_hide_buttons = types.ReplyKeyboardRemove(selective=False)
+    markup_hide_keys = types.ReplyKeyboardRemove(selective=False)
 
     @bot.message_handler(commands=['start'])
     def welcoming(message):
@@ -82,7 +82,7 @@ if __name__ == "__main__":
             #bot.send_document(message.chat.id, recipe_as_doc) # send as document
             # send as text
             recipe_as_text = recipe_as_doc.read()
-            bot.send_message(message.chat.id, recipe_as_text, reply_markup=markup_hide_buttons)
+            bot.send_message(message.chat.id, recipe_as_text, reply_markup=markup_hide_keys)
             recipe_as_doc.close()
 
         elif message.text.lower() in ['сахарное сусло', 'сахарная брага']:
@@ -93,35 +93,29 @@ if __name__ == "__main__":
             #bot.send_document(message.chat.id, recipe_as_doc) # send as document
             # send as text
             recipe_as_text = recipe_as_doc.read()
-            bot.send_message(message.chat.id, recipe_as_text, reply_markup=markup_hide_buttons)
+            bot.send_message(message.chat.id, recipe_as_text, reply_markup=markup_hide_keys)
             recipe_as_doc.close()
 
         elif message.text.lower() in ['расчёт голов и тела']:
             # calling heads and heart calculator
             calc_response = calculators.heads_and_heart_calculator()
-            bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_buttons)
+            bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_keys)
 
         elif message.text.lower() in ['конвертация температуры']:
-            ## testing variables
-            degrees_1 = 212
-            units_1 = 'F'
+            # initiate temperature converter dialog
+            degrees = 0
+            units = ''
 
-            # # selecting units
-            # units_f_to_c = types.KeyboardButton('F -> C')
-            # units_c_to_f = types.KeyboardButton('C -> F')
-            # markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-            # markup.add(units_f_to_c, units_c_to_f)
-            # bot.send_message(message.chat.id, 'Выберите конвертацию', reply_markup=markup)
-            #
-            # if message.text == 'F -> C':
-            #     units = 'f'
-            # elif message.text == 'C -> F':
-            #     units = 'c'
+            # hide keyboard
+            markup_hide_keys = types.ReplyKeyboardRemove(selective=False)
+
+            # ask for temperature
+            str_message = f'Добро пожаловать в конвертер температуры\nВведите температуру\n'
+            bot_message = bot.send_message(message.chat.id, str_message, reply_markup=markup_hide_keys)
+            bot.register_next_step_handler(bot_message, get_temperature)
 
 
-            # calling temperature converter
-            calc_response = calculators.temperature_converter(degrees_1, units_1)
-            bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_buttons)
+
 
         elif message.text.lower() in ['простой калькулятор']:
             str_message = f'Добро пожаловать в простой калькулятор!\nВведите первое число\n'
@@ -142,13 +136,57 @@ if __name__ == "__main__":
             #
             #
             # calc_response = calculators.get_number_1(user_number_1, user_operator, user_number_2)
-            # bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_buttons)
+            # bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_keys)
 
         else:
-            bot.reply_to(message, messages_templates.dont_understand, reply_markup=markup_hide_buttons)
-            # bot.reply_to(message, message.text, reply_markup=markup_hide_buttons) # simple echo to message
+            bot.reply_to(message, messages_templates.dont_understand, reply_markup=markup_hide_keys)
+            # bot.reply_to(message, message.text, reply_markup=markup_hide_keys) # simple echo to message
 
 
+#=========temperature converter=====================
+    def get_temperature(message):
+        logging.debug('stepped into get_temperature')
+
+        global degrees
+        degrees = int(message.text)
+
+        logging.debug(f'degrees = {degrees}')
+        # keys for conversion
+        units_f_to_c = types.KeyboardButton('F -> C')
+        units_c_to_f = types.KeyboardButton('C -> F')
+        markup_convertion_keys = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+        markup_convertion_keys.add(units_f_to_c, units_c_to_f)
+
+        str_message = f'Как конвертируем?'
+        bot_message = bot.send_message(message.chat.id, str_message, reply_markup=markup_convertion_keys)
+        bot.register_next_step_handler(bot_message, get_convert_type)
+
+
+
+    def get_convert_type(message):
+        logging.debug('stepped into get_convert_type')
+
+        global degrees
+        global units
+
+        logging.debug(f'degrees = {degrees}')
+        logging.debug(f'message.text = {message.text}')
+        if message.text == 'F -> C':
+            units = 'f'
+        elif message.text == 'C -> F':
+            units = 'c'
+
+        logging.debug(f'units = {units}')
+        # hide buttons
+        markup_hide_keys = types.ReplyKeyboardRemove(selective=False)
+
+        # call temperature converter
+        calc_response = calculators.temperature_converter(degrees, units)
+        bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_keys)
+
+#====================================================
+
+#======simple calculator=============================
     def get_number_1(message, result = None):
         logging.info('started get_number_1')
         #try:
