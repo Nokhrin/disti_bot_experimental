@@ -38,7 +38,11 @@ if __name__ == "__main__":
 
     @bot.message_handler(commands=['start'])
     def welcoming(message):
-        bot.send_message(message.chat.id, messages_templates.start_message)
+        #bot.send_message(message.chat.id, messages_templates.start_message)
+        logging.info(message)
+        str_hello = f'Привет, {message.from_user.username}!\n'
+        bot.send_message(message.from_user.id, str_hello)
+        bot.send_message(message.from_user.id, messages_templates.start_message)
 
     @bot.message_handler(commands=['help'])
     def help_response(message):
@@ -65,9 +69,10 @@ if __name__ == "__main__":
         calculator_01 = types.KeyboardButton('Расчёт голов и тела')
         calculator_02 = types.KeyboardButton('Конвертация температуры')
         calculator_03 = types.KeyboardButton('Простой калькулятор')
+        calculator_04 = types.KeyboardButton('Калькулятор с кнопками')
         # ==================
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-        markup.add(calculator_01, calculator_02, calculator_03)
+        markup.add(calculator_01, calculator_02, calculator_03, calculator_04)
         bot.send_message(message.chat.id, messages_templates.calculator_message, reply_markup=markup)
 
 
@@ -100,6 +105,10 @@ if __name__ == "__main__":
             # calling heads and heart calculator
             calc_response = calculators.heads_and_heart_calculator()
             bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_keys)
+
+
+
+
 
         elif message.text.lower() in ['конвертация температуры']:
             # initiate temperature converter dialog
@@ -137,6 +146,23 @@ if __name__ == "__main__":
             #
             # calc_response = calculators.get_number_1(user_number_1, user_operator, user_number_2)
             # bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_keys)
+
+        elif message.text.lower() in ['калькулятор с кнопками']:
+            str_message = f'Добро пожаловать в калькулятор!\nПриятных расчётов!\n'
+
+            # testing Keyboard
+            # create keyboard
+            keyboard = telebot.types.InlineKeyboardMarkup()
+            # row of keys 1
+            keyboard.row(telebot.types.InlineKeyboardButton('C/CE', callback_data='C/CE'),
+                         telebot.types.InlineKeyboardButton(u'\u221A', callback_data='sq_root'),
+                         telebot.types.InlineKeyboardButton('%', callback_data='%'),
+                         telebot.types.InlineKeyboardButton('+/-', callback_data='+/-')
+                         )
+
+            # send message to user
+            bot_message = bot.send_message(message.chat.id, str_message, reply_markup=keyboard)
+            bot.register_next_step_handler(bot_message, run_button_calculator)
 
         else:
             bot.reply_to(message, messages_templates.dont_understand, reply_markup=markup_hide_keys)
@@ -313,6 +339,33 @@ if __name__ == "__main__":
 
         # except Exception:
         #     bot.reply_to(message, "Что-то пошло не так")
+
+#============== button calculator =====================
+# layout taken from Citizen SE-707A
+    def run_button_calculator(message):
+        logging.info('stepped into run_button_calculator')
+
+        # create keyboard
+        keyboard = telebot.types.InlineKeyboardMarkup()
+        # row of keys 1
+        keyboard.row(telebot.types.InlineKeyboardButton('C/CE', callback_data='C/CE'),
+                     telebot.types.InlineKeyboardButton(u'\u221A', callback_data='sq_root'),
+                     telebot.types.InlineKeyboardButton('%', callback_data='%'),
+                     telebot.types.InlineKeyboardButton('+/-', callback_data='+/-')
+                     )
+        # row of keys 2
+        # keyboard.row(telebot.types.InlineKeyboardButton(),
+        #              telebot.types.InlineKeyboardButton(),
+        #              telebot.types.InlineKeyboardButton(),
+        #              telebot.types.InlineKeyboardButton(),
+        #              )
+        # row of keys 3
+        # row of keys 4
+        # row of keys 5
+        # row of keys 6
+
+        bot.send_message(message.from_user.id, 'keyboard', reply_markup=keyboard)
+#=======================================================
 
 
     # testing bot with simple echoing message object
