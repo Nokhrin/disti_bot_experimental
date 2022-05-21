@@ -1,3 +1,5 @@
+import math
+
 # heads_and_heart_calculator
 def heads_and_heart_calculator():
     result = 'калькулятор находится в разработке'
@@ -24,3 +26,7 @@ def simple_math_calculator(str_function, int_number_1, int_number_2):
     str_expression = f'{int_number_1} {str_function} {int_number_2}'
     str_result = eval(str_expression)
     return str_result
+
+# keyboard calculator
+def keyboard_calculator(str_operator):
+    pass

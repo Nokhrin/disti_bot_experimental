@@ -165,8 +165,8 @@ if __name__ == "__main__":
             # row of keys 1
             keyboard_layout.row(telebot.types.InlineKeyboardButton('C/CE', callback_data='c/ce'),
                          telebot.types.InlineKeyboardButton(u'\u221A', callback_data='sq_root'),
-                         telebot.types.InlineKeyboardButton('%', callback_data='%'),
-                         telebot.types.InlineKeyboardButton('+/-', callback_data='+/-')
+                         telebot.types.InlineKeyboardButton('%', callback_data='percent'),
+                         telebot.types.InlineKeyboardButton('+/-', callback_data='sign_change')
                          )
             # row of keys 2
             keyboard_layout.row(telebot.types.InlineKeyboardButton('MRC', callback_data='mrc'),
@@ -383,7 +383,7 @@ if __name__ == "__main__":
         # except Exception:
         #     bot.reply_to(message, "Что-то пошло не так")
 
-#============== button calculator =====================
+#============== keyboard calculator =====================
 
     # def run_button_calculator(message):
     #     logging.info('stepped into run_button_calculator')
@@ -408,12 +408,19 @@ if __name__ == "__main__":
         elif user_input in ['c', 'c/ce']:
             calculator_value = ''
         #... conditions
+        # changing sign
+        elif user_input == 'sign_change':
+            if calculator_value != '' and int(calculator_value) > 0:
+                calculator_value = '-' + calculator_value
+            elif calculator_value != '' and int(calculator_value) < 0:
+                calculator_value = calculator_value[1:]
         elif user_input == '=':
             calculator_value = str(eval(calculator_value))
+        elif user_input == 'sq_root':
+            calculator_value = str(int(calculator_value) ** (1 / 2))
         else:
             calculator_value += user_input
 
-        # if calculator_value != prev_calculator_value:
         if calculator_value == '':
             bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text='0', reply_markup=keyboard_layout)
         else:
