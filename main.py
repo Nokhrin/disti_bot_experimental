@@ -147,7 +147,7 @@ if __name__ == "__main__":
             # calc_response = calculators.get_number_1(user_number_1, user_operator, user_number_2)
             # bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_keys)
 
-        elif message.text.lower() in ['калькулятор с кнопками']:
+        elif message.text.lower() in ['калькулятор с кнопками','keyboard_calculator']:
             str_message = f'Добро пожаловать в калькулятор!\nПриятных расчётов!\n'
 
             # hide keyboard
@@ -155,9 +155,12 @@ if __name__ == "__main__":
 
             bot.send_message(message.chat.id, str_message, reply_markup=markup_hide_keys)
 
-            global calculator_value, prev_calculator_value
+            global calculator_value, previous_calculator_value, calculator_first_num, calculator_second_num, calculator_operator
             calculator_value = ''
-            prev_calculator_value = ''
+            previous_calculator_value = ''
+            calculator_first_num = ''
+            calculator_second_num = ''
+            calculator_operator = ''
             # layout taken from Citizen SE-707A
             # create keyboard
             global keyboard_layout
@@ -392,13 +395,27 @@ if __name__ == "__main__":
     @bot.callback_query_handler(func=lambda call: True)
     def callback_func(query):
         logging.info('stepped into callback query on calculator')
-        logging.debug(f'query => {query}')
+        #logging.debug(f'query => {query}')
 
-        global calculator_value, prev_calculator_value
+        global calculator_value, previous_calculator_value, calculator_first_num, calculator_second_num, calculator_operator
+
 
         # process input command
         user_input = query.data
         logging.debug(f'user_input => {user_input}')
+
+        # # remember first number
+        # if calculator_value == '' or (calculator_operator == '' and calculator_second_num == '' and user_input not in ['+','-','*','/']):
+        #     calculator_value += user_input
+        # # remember operator
+        # elif calculator_value != '' and user_input in ['+','-','*','/']:
+        #     calculator_operator = user_input
+        # # remember second number
+        # elif calculator_value != '' and calculator_operator != '' and calculator_second_num == '':
+        #     calculator_second_num = user_input
+
+
+
 
         # build string for eval() function
         # empty key
@@ -407,24 +424,91 @@ if __name__ == "__main__":
         # clear command
         elif user_input in ['c', 'c/ce']:
             calculator_value = ''
-        #... conditions
-        # changing sign
-        elif user_input == 'sign_change':
-            if calculator_value != '' and int(calculator_value) > 0:
-                calculator_value = '-' + calculator_value
-            elif calculator_value != '' and int(calculator_value) < 0:
-                calculator_value = calculator_value[1:]
-        elif user_input == '=':
-            calculator_value = str(eval(calculator_value))
-        elif user_input == 'sq_root':
-            calculator_value = str(int(calculator_value) ** (1 / 2))
+            calculator_first_num = ''
+            calculator_operator = ''
+            calculator_second_num = ''
         else:
-            calculator_value += user_input
+            # remember first number
+            if calculator_first_num == '' or (calculator_operator == '' and calculator_second_num == '' and user_input not in ['+','-','*','/','sign_change','sq_root']):
+                calculator_first_num += user_input
+            # remember operator
+            elif calculator_first_num != '' and user_input in ['+','-','*','/']:
+                calculator_operator = user_input
+            # remember second number
+            elif calculator_first_num != '' and calculator_operator != '' and calculator_second_num == '':
+                calculator_second_num = user_input
 
-        if calculator_value == '':
-            bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text='0', reply_markup=keyboard_layout)
-        else:
-            bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text=calculator_value, reply_markup=keyboard_layout)
+            calculator_value = calculator_first_num + calculator_operator + calculator_second_num
+
+            logging.debug(f'\nBEFORE calculation')
+            logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
+            logging.debug(f'\ncalculator_value = {calculator_value}\nprevious_calculator_value = {previous_calculator_value}\n')
+
+            # percentage
+            # https://devblogs.microsoft.com/oldnewthing/20080110-00/?p=23853
+            # elif user_input == 'percent':
+            #     # first_num * (1 user_operator second_num / 100)
+            #     calculator_value = int(calculator_value) * (1 calculator_operator int(calculator_value) / 100)
+
+
+            # changing sign
+            if user_input == 'sign_change':
+                # change sign of the first number
+                if calculator_first_num != '' and calculator_operator == '':
+                    if int(calculator_first_num) > 0:
+                        calculator_first_num = '-' + calculator_first_num
+                    elif int(calculator_first_num) < 0:
+                        calculator_first_num = calculator_first_num[1:]
+                # change sign of the second number
+                elif calculator_second_num != '':
+                    if int(calculator_second_num) > 0:
+                        calculator_second_num = '-' + calculator_second_num
+                    elif int(calculator_second_num) < 0:
+                        calculator_second_num = calculator_second_num[1:]
+            # square root
+            elif user_input == 'sq_root':
+                # if second num is empty, calculate square root of first num
+                # if second num is not empty, calculate square root of operation result between first and second number
+                if calculator_second_num == '':
+                    sq_root_tmp = calculator_first_num
+                else:
+                    sq_root_tmp = str(eval(calculator_value) ** (1 / 2))
+                calculator_value = str(eval(sq_root_tmp) ** (1 / 2))
+
+                logging.debug(f'\nSquare root')
+                logging.debug(f'\nsq_root_tmp = {sq_root_tmp}')
+                calculator_value = str(eval(calculator_value))
+                calculator_first_num = calculator_value
+                calculator_operator = ''
+                calculator_second_num = ''
+
+
+            # stop calculation
+            elif user_input == '=':
+                calculator_value = str(eval(calculator_value))
+                calculator_first_num = calculator_value
+                calculator_operator = ''
+                calculator_second_num = ''
+
+
+
+        if calculator_value != '':
+            previous_calculator_value = calculator_value
+
+
+        logging.debug(f'right after calculation')
+        logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
+        logging.debug(f'\ncalculator_value = {calculator_value}\nprevious_calculator_value = {previous_calculator_value}\n')
+
+
+        # check if value changed
+        # if it didn't and we'll try to send it as message, the next error will raise:
+        # telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+        if previous_calculator_value != '':
+            if calculator_value == '':
+                bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text='0', reply_markup=keyboard_layout)
+            else:
+                bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text=calculator_value, reply_markup=keyboard_layout)
 
 #=======================================================
 
