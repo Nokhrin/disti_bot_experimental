@@ -149,54 +149,62 @@ if __name__ == "__main__":
 
         elif message.text.lower() in ['калькулятор с кнопками']:
             str_message = f'Добро пожаловать в калькулятор!\nПриятных расчётов!\n'
+
+            # hide keyboard
+            markup_hide_keys = types.ReplyKeyboardRemove(selective=False)
+
+            bot.send_message(message.chat.id, str_message, reply_markup=markup_hide_keys)
+
+            global calculator_value, prev_calculator_value
             calculator_value = ''
             prev_calculator_value = ''
             # layout taken from Citizen SE-707A
             # create keyboard
-            keyboard = telebot.types.InlineKeyboardMarkup(row_width=4)
+            global keyboard_layout
+            keyboard_layout = telebot.types.InlineKeyboardMarkup(row_width=4)
             # row of keys 1
-            keyboard.row(telebot.types.InlineKeyboardButton('C/CE', callback_data='c/ce'),
+            keyboard_layout.row(telebot.types.InlineKeyboardButton('C/CE', callback_data='c/ce'),
                          telebot.types.InlineKeyboardButton(u'\u221A', callback_data='sq_root'),
                          telebot.types.InlineKeyboardButton('%', callback_data='%'),
                          telebot.types.InlineKeyboardButton('+/-', callback_data='+/-')
                          )
             # row of keys 2
-            keyboard.row(telebot.types.InlineKeyboardButton('MRC', callback_data='mrc'),
+            keyboard_layout.row(telebot.types.InlineKeyboardButton('MRC', callback_data='mrc'),
                          telebot.types.InlineKeyboardButton('M-', callback_data='m-'),
                          telebot.types.InlineKeyboardButton('M+', callback_data='m+'),
                          telebot.types.InlineKeyboardButton('/', callback_data='/')
                          )
             # row of keys 3
-            keyboard.row(telebot.types.InlineKeyboardButton('7', callback_data='7'),
+            keyboard_layout.row(telebot.types.InlineKeyboardButton('7', callback_data='7'),
                          telebot.types.InlineKeyboardButton('8', callback_data='8'),
                          telebot.types.InlineKeyboardButton('9', callback_data='9'),
                          telebot.types.InlineKeyboardButton('*', callback_data='*')
                          )
             # row of keys 4
-            keyboard.row(telebot.types.InlineKeyboardButton('4', callback_data='4'),
+            keyboard_layout.row(telebot.types.InlineKeyboardButton('4', callback_data='4'),
                          telebot.types.InlineKeyboardButton('5', callback_data='5'),
                          telebot.types.InlineKeyboardButton('6', callback_data='6'),
                          telebot.types.InlineKeyboardButton('-', callback_data='-')
                          )
             # row of keys 5
-            keyboard.row(telebot.types.InlineKeyboardButton('1', callback_data='1'),
+            keyboard_layout.row(telebot.types.InlineKeyboardButton('1', callback_data='1'),
                          telebot.types.InlineKeyboardButton('2', callback_data='2'),
                          telebot.types.InlineKeyboardButton('3', callback_data='3'),
                          telebot.types.InlineKeyboardButton('+', callback_data='+')
                          )
             # row of keys 6
-            keyboard.row(telebot.types.InlineKeyboardButton('0', callback_data='0'),
+            keyboard_layout.row(telebot.types.InlineKeyboardButton('0', callback_data='0'),
                          telebot.types.InlineKeyboardButton('.', callback_data='.'),
-                         telebot.types.InlineKeyboardButton(' ', callback_data='none'),
+                         telebot.types.InlineKeyboardButton(' ', callback_data='nothing'),
                          telebot.types.InlineKeyboardButton('=', callback_data='=')
                          )
 
 
             # send message to user
             if calculator_value == '':
-                bot_message = bot.send_message(message.chat.id, '0', reply_markup=keyboard)
+                bot_message = bot.send_message(message.chat.id, '0', reply_markup=keyboard_layout)
             else:
-                bot_message = bot.send_message(message.chat.id, calculator_value, reply_markup=keyboard)
+                bot_message = bot.send_message(message.chat.id, calculator_value, reply_markup=keyboard_layout)
             # bot.register_next_step_handler(bot_message, run_button_calculator)
 
         else:
@@ -394,10 +402,10 @@ if __name__ == "__main__":
 
         # build string for eval() function
         # empty key
-        if user_input == 'none':
-            pass
+        if user_input in ['nothing']:
+            return
         # clear command
-        elif user_input == 'c':
+        elif user_input in ['c', 'c/ce']:
             calculator_value = ''
         #... conditions
         elif user_input == '=':
@@ -407,9 +415,9 @@ if __name__ == "__main__":
 
         # if calculator_value != prev_calculator_value:
         if calculator_value == '':
-            bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, '0', reply_markup=keyboard)
+            bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text='0', reply_markup=keyboard_layout)
         else:
-            bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, calculator_value, reply_markup=keyboard)
+            bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text=calculator_value, reply_markup=keyboard_layout)
 
 #=======================================================
 
