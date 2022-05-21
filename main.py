@@ -444,12 +444,6 @@ if __name__ == "__main__":
             logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
             logging.debug(f'\ncalculator_value = {calculator_value}\nprevious_calculator_value = {previous_calculator_value}\n')
 
-            # percentage
-            # https://devblogs.microsoft.com/oldnewthing/20080110-00/?p=23853
-            # elif user_input == 'percent':
-            #     # first_num * (1 user_operator second_num / 100)
-            #     calculator_value = int(calculator_value) * (1 calculator_operator int(calculator_value) / 100)
-
 
             # changing sign
             if user_input == 'sign_change':
@@ -465,6 +459,23 @@ if __name__ == "__main__":
                         calculator_second_num = '-' + calculator_second_num
                     elif int(calculator_second_num) < 0:
                         calculator_second_num = calculator_second_num[1:]
+
+            # percentage
+            # https://devblogs.microsoft.com/oldnewthing/20080110-00/?p=23853
+            elif user_input == 'percent':
+                # operator and two numbers should be provided
+                if calculator_first_num != '' and calculator_operator != '' and calculator_second_num != '':
+                    # algrorithm: first_num * (1 'user_operator' second_num / 100)
+                    global percentage_result
+                    # logging.debug(f'PERCENTAGE')
+                    # logging.debug(f'calculator_value = {calculator_value}')
+                    percentage_result = calculator_first_num + '*(1' + calculator_operator + calculator_second_num + '/100)'
+                    # logging.debug(f'percentage_result = {percentage_result}')
+
+                    # show % on screen
+                    calculator_value += '%'
+                    #calculator_value = str(eval(percentage_result))
+
             # square root
             elif user_input == 'sq_root':
                 # if second num is empty, calculate square root of first num
@@ -485,6 +496,9 @@ if __name__ == "__main__":
 
             # stop calculation
             elif user_input == '=':
+                # logging.debug(f'\n\npercentage_result = {percentage_result},\n calculator_value[-1:] = {calculator_value[-1:]}')
+                if previous_calculator_value[-1:] == '%':
+                    calculator_value = percentage_result
                 calculator_value = str(eval(calculator_value))
                 calculator_first_num = calculator_value
                 calculator_operator = ''
