@@ -147,7 +147,7 @@ if __name__ == "__main__":
             # calc_response = calculators.get_number_1(user_number_1, user_operator, user_number_2)
             # bot.send_message(message.chat.id, calc_response, reply_markup=markup_hide_keys)
 
-        elif message.text.lower() in ['калькулятор с кнопками','keyboard_calculator']:
+        elif message.text.lower() in ['калькулятор с кнопками','keyboard_calculator','/kc']:
             str_message = f'Добро пожаловать в калькулятор!\nПриятных расчётов!\n'
 
             # hide keyboard
@@ -156,17 +156,22 @@ if __name__ == "__main__":
             bot.send_message(message.chat.id, str_message, reply_markup=markup_hide_keys)
 
             global calculator_value, previous_calculator_value, calculator_first_num, calculator_second_num, calculator_operator
+
+            global calculator_memory, mrc_pressed_once
+
             calculator_value = ''
             previous_calculator_value = ''
             calculator_first_num = ''
             calculator_second_num = ''
             calculator_operator = ''
+            calculator_memory = ''
+            mrc_pressed_once = False
             # layout taken from Citizen SE-707A
             # create keyboard
             global keyboard_layout
             keyboard_layout = telebot.types.InlineKeyboardMarkup(row_width=4)
             # row of keys 1
-            keyboard_layout.row(telebot.types.InlineKeyboardButton('C/CE', callback_data='c/ce'),
+            keyboard_layout.row(telebot.types.InlineKeyboardButton('C/CE', callback_data='all_clear'),
                          telebot.types.InlineKeyboardButton(u'\u221A', callback_data='sq_root'),
                          telebot.types.InlineKeyboardButton('%', callback_data='percent'),
                          telebot.types.InlineKeyboardButton('+/-', callback_data='sign_change')
@@ -397,7 +402,7 @@ if __name__ == "__main__":
         logging.info('stepped into callback query on calculator')
         #logging.debug(f'query => {query}')
 
-        global calculator_value, previous_calculator_value, calculator_first_num, calculator_second_num, calculator_operator
+        global calculator_value, previous_calculator_value, calculator_first_num, calculator_second_num, calculator_operator, calculator_memory, mrc_pressed_once
 
 
         # process input command
@@ -416,30 +421,41 @@ if __name__ == "__main__":
 
 
 
-
-        # build string for eval() function
         # empty key
         if user_input in ['nothing']:
             return
-        # clear command
-        elif user_input in ['c', 'c/ce']:
+
+        elif user_input in ['c', 'c/ce', 'all_clear']:
+            # clear command
+            # "C" and "CE" functions work differently, but they are combined on my etalon hardware calculator
+            # "CE" erases the last number or operation entered
+            # "C" stands for “global clear” that clears or deletes the entire calculation (sometimes "AC" - all clear)
+                # source:
+                # https://www.zencalculator.com/reviews/c-vs-ce-in-calculator/
+                # https://www.calculator.org/CalcHelp/basics.html
+
             calculator_value = ''
             calculator_first_num = ''
             calculator_operator = ''
             calculator_second_num = ''
-        else:
+
+        elif user_input not in ['=','+','-','*','/','sign_change','sq_root','mrc','m+','m-']:
             # remember first number
-            if calculator_first_num == '' or (calculator_operator == '' and calculator_second_num == '' and user_input not in ['+','-','*','/','sign_change','sq_root']):
+            if calculator_first_num == '' or (calculator_operator == '' and calculator_second_num == ''):
                 calculator_first_num += user_input
-            # remember operator
-            elif calculator_first_num != '' and user_input in ['+','-','*','/']:
-                calculator_operator = user_input
+                calculator_value = calculator_first_num
+
             # remember second number
-            elif calculator_first_num != '' and calculator_operator != '' and calculator_second_num == '':
-                calculator_second_num = user_input
+            if calculator_first_num != '' and calculator_operator != '' and calculator_second_num == '':
+                calculator_second_num += user_input
+                calculator_value += calculator_second_num
 
-            calculator_value = calculator_first_num + calculator_operator + calculator_second_num
+        # remember operator
+        elif user_input in ['+','-','*','/']:
+            calculator_operator = user_input
+            calculator_value += calculator_operator
 
+        else:
             logging.debug(f'\nBEFORE calculation')
             logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
             logging.debug(f'\ncalculator_value = {calculator_value}\nprevious_calculator_value = {previous_calculator_value}\n')
@@ -486,25 +502,70 @@ if __name__ == "__main__":
                     sq_root_tmp = str(eval(calculator_value) ** (1 / 2))
                 calculator_value = str(eval(sq_root_tmp) ** (1 / 2))
 
-                logging.debug(f'\nSquare root')
-                logging.debug(f'\nsq_root_tmp = {sq_root_tmp}')
+                # logging.debug(f'\nSquare root')
+                # logging.debug(f'\nsq_root_tmp = {sq_root_tmp}')
                 calculator_value = str(eval(calculator_value))
                 calculator_first_num = calculator_value
                 calculator_operator = ''
                 calculator_second_num = ''
 
+            # memory operations
+            # https://www.normansoven.com/post/how-to-use-the-memory-functions-of-your-calculator
+            # "MRC" stands for “Memory Recall(Read) Clear”.
+                # Pressing it recalls(reads) the value stored in its memory, pressing it again clears it. - https://qr.ae/pvC8iT
+            # "M+" adds input to the memory
+            # "M-" subtracts from the memory
+            elif user_input == 'mrc':
+                logging.debug(f'MRC pressed\n calculator_memory = {calculator_memory}')
+                # logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
+                if mrc_pressed_once == False: # if MRC pressed once, it recall the value from memory
+                    mrc_pressed_once = True
+                    #if calculator_first_num == '': # if we don't to rewrite entered number
+                    if calculator_first_num != '' and calculator_operator == '' and calculator_second_num == '': # that means we are working with first number
+                        if calculator_memory != '':
+                            calculator_first_num = calculator_memory
+                        else:
+                            calculator_first_num = '0'
+                    elif calculator_first_num != '' and calculator_operator != '' and calculator_second_num == '':
+                        if calculator_memory != '':
+                            calculator_second_num = calculator_memory
+                        else:
+                            calculator_second_num = '0'
+                else: # if MRC pressed twice in a row, it clears the value from memory
+                    calculator_memory = ''
+                    mrc_pressed_once = False # back to initial unpressed position
+                logging.debug(f'MRC pressed - END -- \n calculator_memory = {calculator_memory}')
+                # logging.debug(f'first num should be 0 here \n calculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
+            elif user_input == 'm+':
+                logging.debug(f'M+ pressed')
+                logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
+                if calculator_first_num != '' and calculator_operator == '' and calculator_second_num == '':
+                    num_add_to_memory = calculator_first_num
+                calculator_memory = str(eval(calculator_memory + '+' + num_add_to_memory))
+                logging.debug(f'calculator_memory = {calculator_memory}')
+
+            elif user_input == 'm-':
+                logging.debug(f'M- pressed')
 
             # stop calculation
             elif user_input == '=':
-                # logging.debug(f'\n\npercentage_result = {percentage_result},\n calculator_value[-1:] = {calculator_value[-1:]}')
                 if previous_calculator_value[-1:] == '%':
                     calculator_value = percentage_result
+
+                logging.debug(f'\n "=" pressed \ncalculator_value = {calculator_value}\nprevious_calculator_value = {previous_calculator_value}\n')
+                # final value expression
+                # calculator_value = calculator_first_num + calculator_operator + calculator_second_num
                 calculator_value = str(eval(calculator_value))
+                # variables for the next call
                 calculator_first_num = calculator_value
                 calculator_operator = ''
                 calculator_second_num = ''
 
-
+        # final value expression
+        # build string for eval() function
+        # if calculator_first_num != '' and calculator_operator != '' and calculator_second_num != '':
+            # calculator_value = calculator_first_num + calculator_operator + calculator_second_num
+            # calculator_value = str(eval(calculator_value))
 
         if calculator_value != '':
             previous_calculator_value = calculator_value
@@ -519,10 +580,17 @@ if __name__ == "__main__":
         # if it didn't and we'll try to send it as message, the next error will raise:
         # telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
         if previous_calculator_value != '':
+            # prepare message
             if calculator_value == '':
-                bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text='0', reply_markup=keyboard_layout)
+                str_message = '0'
             else:
-                bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text=calculator_value, reply_markup=keyboard_layout)
+                if calculator_memory == '':
+                    str_message = f'{calculator_value}'
+                else:
+                    str_message = f'{calculator_value} (память: {calculator_memory})'
+            logging.debug(f'str_message = {str_message}')
+            # send message
+            bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text=str_message, reply_markup=keyboard_layout)
 
 #=======================================================
 
