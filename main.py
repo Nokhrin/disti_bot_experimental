@@ -465,17 +465,34 @@ if __name__ == "__main__":
             # changing sign
             if user_input == 'sign_change':
                 # change sign of the first number
+                logging.debug(f'\n SIGN CHANGE started')
+
                 if calculator_first_num != '' and calculator_operator == '':
-                    if int(calculator_first_num) > 0:
-                        calculator_first_num = '-' + calculator_first_num
-                    elif int(calculator_first_num) < 0:
-                        calculator_first_num = calculator_first_num[1:]
+                    if type(eval(calculator_first_num)) is int:
+                        if int(calculator_first_num) > 0:
+                            calculator_first_num = '-' + calculator_first_num
+                        elif int(calculator_first_num) < 0:
+                            calculator_first_num = calculator_first_num[1:]
+                    elif type(eval(calculator_first_num)) is float:
+                        if float(calculator_first_num) > 0:
+                            calculator_first_num = '-' + calculator_first_num
+                        elif float(calculator_first_num) < 0:
+                            calculator_first_num = calculator_first_num[1:]
+
+                    calculator_value = calculator_first_num # update expression to calculate
                 # change sign of the second number
                 elif calculator_second_num != '':
                     if int(calculator_second_num) > 0:
-                        calculator_second_num = '-' + calculator_second_num
+                        calculator_second_num = '(-' + calculator_second_num + ')'
                     elif int(calculator_second_num) < 0:
-                        calculator_second_num = calculator_second_num[1:]
+                        if calculator_second_num[:2] == '(-' and calculator_second_num[-1:] == ')':
+                            calculator_second_num = calculator_second_num[2:-1] # remove brackets and minus sign
+
+                    calculator_value = calculator_first_num + calculator_operator + calculator_second_num # update expression to calculate
+
+                logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
+                logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
+                logging.debug(f'\n SIGN CHANGE finished')
 
             # percentage
             # https://devblogs.microsoft.com/oldnewthing/20080110-00/?p=23853
