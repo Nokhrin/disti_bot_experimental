@@ -427,6 +427,10 @@ if __name__ == "__main__":
 
         elif user_input in ['c', 'c/ce', 'all_clear']:
             # clear command
+            # pressed once - clears the last user_input, keeps memory
+            # pressed twice - clears input and memory
+            #
+            # reference:
             # "C" and "CE" functions work differently, but they are combined on my etalon hardware calculator
             # "CE" erases the last number or operation entered
             # "C" stands for “global clear” that clears or deletes the entire calculation (sometimes "AC" - all clear)
@@ -438,6 +442,9 @@ if __name__ == "__main__":
             calculator_first_num = ''
             calculator_operator = ''
             calculator_second_num = ''
+            # clear memory
+            mrc_pressed_once = False
+            calculator_memory = ''
 
         elif user_input not in ['=','+','-','*','/','sign_change','sq_root','mrc','m+','m-']:
             # remember first number
@@ -536,34 +543,40 @@ if __name__ == "__main__":
             elif user_input == 'mrc':
                 logging.debug(f'MRC pressed\n calculator_memory = {calculator_memory}')
                 # logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
+
                 if mrc_pressed_once == False: # if MRC pressed once, it recall the value from memory
                     mrc_pressed_once = True
-                    #if calculator_first_num == '': # if we don't to rewrite entered number
+
+                    # set first number equal to number in memory
                     if calculator_first_num != '' and calculator_operator == '' and calculator_second_num == '': # that means we are working with first number
                         if calculator_memory != '':
                             calculator_first_num = calculator_memory
                         else:
                             calculator_first_num = '0'
+                    # set second number equal to number in memory
                     elif calculator_first_num != '' and calculator_operator != '' and calculator_second_num == '':
                         if calculator_memory != '':
                             calculator_second_num = calculator_memory
                         else:
                             calculator_second_num = '0'
+
+                    calculator_value = calculator_first_num + calculator_operator + calculator_second_num # update expression to calculate
+
                 else: # if MRC pressed twice in a row, it clears the value from memory
                     calculator_memory = ''
                     mrc_pressed_once = False # back to initial unpressed position
-                logging.debug(f'MRC pressed - END -- \n calculator_memory = {calculator_memory}')
+                # logging.debug(f'MRC pressed - END -- \n calculator_memory = {calculator_memory}')
                 # logging.debug(f'first num should be 0 here \n calculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
-            elif user_input == 'm+':
-                logging.debug(f'M+ pressed')
-                logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
+            elif user_input in ['m+','m-']:
+                if user_input == 'm+':
+                    # logging.debug(f'M+ pressed')
+                    memory_sign = '+'
+                elif user_input == 'm-':
+                    # logging.debug(f'M- pressed')
+                    memory_sign = '-'
                 if calculator_first_num != '' and calculator_operator == '' and calculator_second_num == '':
                     num_add_to_memory = calculator_first_num
-                calculator_memory = str(eval(calculator_memory + '+' + num_add_to_memory))
-                logging.debug(f'calculator_memory = {calculator_memory}')
-
-            elif user_input == 'm-':
-                logging.debug(f'M- pressed')
+                    calculator_memory = str(eval(calculator_memory + memory_sign + num_add_to_memory))
 
             # stop calculation
             elif user_input == '=':
