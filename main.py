@@ -446,9 +446,10 @@ if __name__ == "__main__":
                 calculator_value = calculator_first_num
 
             # remember second number
-            if calculator_first_num != '' and calculator_operator != '' and calculator_second_num == '':
+            # if calculator_first_num != '' and calculator_operator != '' and calculator_second_num == '':
+            if calculator_first_num != '' and calculator_operator != '':
                 calculator_second_num += user_input
-                calculator_value += calculator_second_num
+                calculator_value = calculator_first_num + calculator_operator + calculator_second_num
 
         # remember operator
         elif user_input in ['+','-','*','/']:
