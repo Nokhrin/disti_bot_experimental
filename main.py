@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
             global calculator_value, previous_calculator_value, calculator_first_num, calculator_second_num, calculator_operator
 
-            global calculator_memory, mrc_pressed_once
+            global calculator_memory, mrc_pressed_once, clear_pressed_once
 
             calculator_value = ''
             previous_calculator_value = ''
@@ -166,6 +166,7 @@ if __name__ == "__main__":
             calculator_operator = ''
             calculator_memory = ''
             mrc_pressed_once = False
+            clear_pressed_once = False
             # layout taken from Citizen SE-707A
             # create keyboard
             global keyboard_layout
@@ -403,7 +404,7 @@ if __name__ == "__main__":
         #logging.debug(f'query => {query}')
 
         global calculator_value, previous_calculator_value, calculator_first_num, calculator_second_num, calculator_operator, calculator_memory, mrc_pressed_once
-
+        global clear_pressed_once
 
         # process input command
         user_input = query.data
@@ -423,6 +424,7 @@ if __name__ == "__main__":
 
         # empty key
         if user_input in ['nothing']:
+            clear_pressed_once = False # any button but C/CE sets clear status to initial
             return
 
         elif user_input in ['c', 'c/ce', 'all_clear']:
@@ -438,15 +440,37 @@ if __name__ == "__main__":
                 # https://www.zencalculator.com/reviews/c-vs-ce-in-calculator/
                 # https://www.calculator.org/CalcHelp/basics.html
 
-            calculator_value = ''
-            calculator_first_num = ''
-            calculator_operator = ''
-            calculator_second_num = ''
-            # clear memory
-            mrc_pressed_once = False
-            calculator_memory = ''
+            # clear pressed once - clear input only, keep memory
+            if clear_pressed_once == False:
+                clear_pressed_once = True
+                # calculator_value = f'(память: {calculator_memory})'
+                calculator_value = '0'
+                # calculator_memory - keep the number
+                calculator_first_num = ''
+                calculator_operator = ''
+                calculator_second_num = ''
+
+                logging.debug(f'clear_pressed_once = {clear_pressed_once}')
+                logging.debug(f'calculator_memory = {calculator_memory}')
+                logging.debug(f'calculator_value = {calculator_value}')
+            # clear pressed twice - clear input and memory
+            else:
+                clear_pressed_once = False # any button but C/CE sets clear status to initial
+                calculator_value = ''
+                calculator_first_num = ''
+                calculator_operator = ''
+                calculator_second_num = ''
+                # clear memory
+                mrc_pressed_once = False
+                calculator_memory = ''
+
+                logging.debug(f'clear_pressed_once = {clear_pressed_once}')
+                logging.debug(f'calculator_memory = {calculator_memory}')
+                logging.debug(f'calculator_value = {calculator_value}')
 
         elif user_input not in ['=','+','-','*','/','sign_change','sq_root','mrc','m+','m-']:
+            clear_pressed_once = False # any button but C/CE sets clear status to initial
+
             # remember first number
             if calculator_first_num == '' or (calculator_operator == '' and calculator_second_num == ''):
                 calculator_first_num += user_input
@@ -460,10 +484,12 @@ if __name__ == "__main__":
 
         # remember operator
         elif user_input in ['+','-','*','/']:
+            clear_pressed_once = False # any button but C/CE sets clear status to initial
             calculator_operator = user_input
             calculator_value += calculator_operator
 
         else:
+            clear_pressed_once = False # any button but C/CE sets clear status to initial
             logging.debug(f'\nBEFORE calculation')
             logging.debug(f'\ncalculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
             logging.debug(f'\ncalculator_value = {calculator_value}\nprevious_calculator_value = {previous_calculator_value}\n')
@@ -548,7 +574,7 @@ if __name__ == "__main__":
                     mrc_pressed_once = True
 
                     # set first number equal to number in memory
-                    if calculator_first_num != '' and calculator_operator == '' and calculator_second_num == '': # that means we are working with first number
+                    if calculator_first_num == '' and calculator_operator == '' and calculator_second_num == '': # that means we are working with first number
                         if calculator_memory != '':
                             calculator_first_num = calculator_memory
                         else:
@@ -569,15 +595,21 @@ if __name__ == "__main__":
                 # logging.debug(f'first num should be 0 here \n calculator_first_num = {calculator_first_num}\n user_operator = {calculator_operator}\n calculator_second_num = {calculator_second_num}\n')
             elif user_input in ['m+','m-']:
                 if user_input == 'm+':
-                    # logging.debug(f'M+ pressed')
+                    logging.debug(f'M+ pressed')
                     memory_sign = '+'
                 elif user_input == 'm-':
-                    # logging.debug(f'M- pressed')
+                    logging.debug(f'M- pressed')
                     memory_sign = '-'
                 if calculator_first_num != '' and calculator_operator == '' and calculator_second_num == '':
                     num_add_to_memory = calculator_first_num
                     calculator_memory = str(eval(calculator_memory + memory_sign + num_add_to_memory))
+                    # set MRC to initial value when adding numbers to memory
+                    mrc_pressed_once = False
+                    clear_pressed_once = False
 
+                logging.debug(f'calculator_first_num = {calculator_first_num}')
+                logging.debug(f'calculator_value = {calculator_value}')
+                logging.debug(f'calculator_memory = {calculator_memory}')
             # stop calculation
             elif user_input == '=':
                 if previous_calculator_value[-1:] == '%':
@@ -615,11 +647,14 @@ if __name__ == "__main__":
             if calculator_value == '':
                 str_message = '0'
             else:
+                logging.debug(f'str_message: calculator_memory = {calculator_memory}; clear_pressed_once = {clear_pressed_once}')
                 if calculator_memory == '':
                     str_message = f'{calculator_value}'
-                else:
+                elif calculator_memory == '' and clear_pressed_once == True:
+                    str_message = f'(память: {calculator_value})'
+                elif calculator_value != '' and calculator_memory != '':
                     str_message = f'{calculator_value} (память: {calculator_memory})'
-            logging.debug(f'str_message = {str_message}')
+                logging.debug(f'str_message = {str_message}')
             # send message
             bot.edit_message_text(chat_id=query.message.chat.id, message_id=query.message.message_id, text=str_message, reply_markup=keyboard_layout)
 
